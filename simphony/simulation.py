@@ -11,14 +11,15 @@ This package contains the base classes for running simulations.
 
 import copy
 import logging
-import uuid
 
+from typing import List, Optional, Tuple, Union
 import numpy as np
 
 from simphony.connect import connect_s, innerconnect_s
 from simphony.elements import Model
 from simphony.netlist import Element, ElementList, PinList, Subcircuit
 from simphony.tools import freq2wl, wl2freq
+from numpy import ndarray
 
 _module_logger = logging.getLogger(__name__)
 
@@ -99,7 +100,13 @@ class SweepSimulationResult(SimulationResult):
         self.f = freq
         self.s = smat.s
 
-    def data(self, inp, outp, invals=None, dB=False):
+    def data(
+        self,
+        inp: Union[str, List[int], List[str], int],
+        outp: Union[str, int],
+        invals: Optional[Union[int, List[int]]] = None,
+        dB: bool = False,
+    ) -> Tuple[ndarray, ndarray]:
         """
         Parameters
         ----------
@@ -169,7 +176,14 @@ class MonteCarloSimulationResult(SimulationResult):
     def add_result(self, result):
         self.results.append(result)
 
-    def data(self, inp, outp, run, invals=None, dB=False):
+    def data(
+        self,
+        inp: Union[str, List[int], List[str], int],
+        outp: Union[str, int],
+        run: int,
+        invals: Optional[Union[int, List[int]]] = None,
+        dB: bool = False,
+    ) -> Tuple[ndarray, ndarray]:
         """
         Parameters
         ----------
@@ -365,7 +379,8 @@ class SweepSimulation(Simulation):
         for model in models:
             # Ensure that models have required attributes.
             try:
-                lower, upper = model.freq_range
+                lower = min(model.freq_range)
+                upper = max(model.freq_range)
             except TypeError:
                 raise NotImplementedError(
                     'Does the model "{}" define a valid frequency range?'.format(
@@ -374,11 +389,13 @@ class SweepSimulation(Simulation):
                 )
 
             # Ensure that models are valid with current simulation parameters.
-            if lower > freq[0] or upper < freq[-1]:
+            if lower > min(freq) or upper < max(freq):
+                wmax = freq2wl(max(freq))
+                wmin = freq2wl(min(freq))
+                wmax_model = freq2wl(upper)
+                wmin_model = freq2wl(lower)
                 raise ValueError(
-                    'Simulation frequencies ({} - {}) out of valid bounds for "{}"'.format(
-                        freq[0], freq[-1], type(model).__name__
-                    )
+                    f'Simulation wavelengths ({wmin} - {wmax}) out of valid bounds for "{model} {wmin_model}-{wmax_model}"'
                 )
 
     @staticmethod

@@ -13,8 +13,8 @@ import copy
 import itertools
 import logging
 import uuid
-from collections import OrderedDict
 
+from typing import Optional, Union
 from simphony.elements import Model
 
 _module_logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class Pin:
 
     _logger = _module_logger.getChild("Pin")
 
-    def __init__(self, pinlist, name):
+    def __init__(self, pinlist, name: Optional[str]) -> None:
         self.pinlist = pinlist
         self.name = name
 
@@ -59,7 +59,7 @@ class Pin:
         return self.pinlist.element
 
     @property
-    def index(self):
+    def index(self) -> int:
         return self.pinlist.index(self)
 
 
@@ -117,14 +117,14 @@ class PinList:
 
     _logger = _module_logger.getChild("PinList")
 
-    def __init__(self, element, *pins):
+    def __init__(self, element: None, *pins) -> None:
         self.element = element
         self.pins = []
 
         for pin in pins:
             self.append(pin)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Union[str, Pin, int]) -> Pin:
         if type(item) is str:
             ret = None
             for pin in self.pins:
@@ -159,7 +159,7 @@ class PinList:
         err = "'{}' not in PinList.".format(key)
         raise KeyError(err)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.pins)
 
     def __add__(self, other):
@@ -172,7 +172,7 @@ class PinList:
     def __repr__(self):
         return str(self.pins)
 
-    def _normalize(self, pin):
+    def _normalize(self, pin: Union[str, Pin]) -> Pin:
         if type(pin) is Pin:
             pin.pinlist = self
             return pin
@@ -181,7 +181,7 @@ class PinList:
         err = "expected type 'str' or 'Pin', got {}".format(type(pin))
         raise TypeError(err)
 
-    def contains(self, pin):
+    def contains(self, pin: Pin) -> bool:
         """
         Parameters
         ----------
@@ -201,7 +201,7 @@ class PinList:
                 return True
         return False
 
-    def append(self, pin):
+    def append(self, pin: Union[str, Pin]) -> None:
         """Takes a pin argument (string or Pin) and creates a ``Pin`` object.
 
         Parameters
@@ -214,7 +214,7 @@ class PinList:
             raise ValueError("name '{}' is not unique in PinList")
         self.pins.append(pin)
 
-    def remove(self, *pins):
+    def remove(self, *pins) -> None:
         """Removes a pin from the pinlist by name or value.
 
         Parameters
@@ -250,7 +250,7 @@ class PinList:
         for pin, name in zip(self.pins, names):
             pin.name = name
 
-    def index(self, pin):
+    def index(self, pin: Pin) -> int:
         """Given a ``Pin`` object, returns its index or position in the
         ``PinList``.
 

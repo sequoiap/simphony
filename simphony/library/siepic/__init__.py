@@ -87,6 +87,8 @@ from scipy.constants import c as SPEED_OF_LIGHT
 from simphony.elements import Model
 from simphony.library.siepic import parser
 from simphony.tools import freq2wl, interpolate, str2float, wl2freq
+from numpy import ndarray
+from typing import Any, Dict, List, Union
 
 
 def closest(sorted_list, value):
@@ -120,7 +122,7 @@ def closest(sorted_list, value):
         return before
 
 
-def get_files_from_dir(path):
+def get_files_from_dir(path: str) -> List[str]:
     """Gets the string name of every file in a given directory.
 
     Parameters
@@ -136,7 +138,7 @@ def get_files_from_dir(path):
     return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
 
-def extract_args(strings, regex, args):
+def extract_args(strings: List[str], regex: str, args: List[str]) -> List[Dict[str, str]]:
     """
     Parameters
     ----------
@@ -267,13 +269,13 @@ class siepic_ebeam_pdk_base(Model):
     _argset = None
     # -------------------------------------------------------------------------
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.enable_autoupdate()
         self.on_args_changed()
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """If the autoupdate mechanism is enabled, callback to
         `on_args_changed()` is performed when an attribute also found in
         `_args_keys` is set."""
@@ -284,7 +286,7 @@ class siepic_ebeam_pdk_base(Model):
             self.on_args_changed()
 
     @property
-    def args(self):
+    def args(self) -> Dict[str, Union[str, float, int]]:
         """A mapping of args (as found in `_args_keys`) to the stored attribute
         values.
 
@@ -347,18 +349,18 @@ class siepic_ebeam_pdk_base(Model):
         """
         raise NotImplementedError
 
-    def suspend_autoupdate(self):
+    def suspend_autoupdate(self) -> None:
         """Prevents the autoupdate of models when object attributes are
         modified."""
         self._autoupdate = False
 
-    def enable_autoupdate(self):
+    def enable_autoupdate(self) -> None:
         """Enables the autoupdate of models when object attributes are
         modified."""
         self._autoupdate = True
 
     @classmethod
-    def _source_argsets(cls):
+    def _source_argsets(cls) -> List[Dict[str, str]]:
         """Generates the argsets that match .sparam filename conventions, based
         on class attributes.
 
@@ -376,7 +378,7 @@ class siepic_ebeam_pdk_base(Model):
             return cls._available_argsets
 
     @classmethod
-    def _get_file(cls, argset):
+    def _get_file(cls, argset: Dict[str, str]) -> str:
         """Given the selected argset, get the path to the appropriate data
         file.
 
@@ -394,7 +396,7 @@ class siepic_ebeam_pdk_base(Model):
         return os.path.join(cls._base_path, cls._base_file.substitute(**argset))
 
     @classmethod
-    def _get_matched_args(cls, norm_args, req_args):
+    def _get_matched_args(cls, norm_args: Union[List[Dict[str, Union[str, float]]], List[Dict[str, float]]], req_args: Dict[str, Union[str, float, int]]) -> int:
         """Finds the argset from a set of normalized argsets most similar to
         the requested argset.
 
@@ -505,10 +507,10 @@ class ebeam_bdc_te1550(siepic_ebeam_pdk_base):
         r"(?:\.sparam)"
     )
 
-    def __init__(self, thickness=220e-9, width=500e-9):
+    def __init__(self, thickness: float=220e-9, width: float=500e-9) -> None:
         super().__init__(thickness=thickness, width=width)
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -527,7 +529,7 @@ class ebeam_bdc_te1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         return interpolate(freq, self._f, self._s)
 
 
@@ -612,8 +614,8 @@ class ebeam_dc_halfring_straight(siepic_ebeam_pdk_base):
     )
 
     def __init__(
-        self, gap=30e-9, radius=10e-6, width=500e-9, thickness=220e-9, couple_length=0.0
-    ):
+        self, gap: float=30e-9, radius: float=10e-6, width: float=500e-9, thickness: float=220e-9, couple_length: float=0.0
+    ) -> None:
         super().__init__(
             gap=gap,
             radius=radius,
@@ -622,7 +624,7 @@ class ebeam_dc_halfring_straight(siepic_ebeam_pdk_base):
             couple_length=couple_length,
         )
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -641,7 +643,7 @@ class ebeam_dc_halfring_straight(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         return interpolate(freq, self._f, self._s)
 
 
@@ -680,10 +682,10 @@ class ebeam_dc_te1550(siepic_ebeam_pdk_base):
         r"(?:m\.sparam)"
     )
 
-    def __init__(self, gap=200e-9, Lc=10e-6):
+    def __init__(self, gap: float=200e-9, Lc: float=10e-6) -> None:
         super().__init__(gap=gap, Lc=Lc)
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -702,7 +704,7 @@ class ebeam_dc_te1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         return interpolate(freq, self._f, self._s)
 
 
@@ -761,10 +763,10 @@ class ebeam_terminator_te1550(siepic_ebeam_pdk_base):
         r"(?:_TE.sparam)"
     )
 
-    def __init__(self, w1=500e-9, w2=60e-9, L=10e-6):
+    def __init__(self, w1: float=500e-9, w2: float=60e-9, L: float=10e-6) -> None:
         super().__init__(w1=w1, w2=w2, L=L)
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -790,7 +792,7 @@ class ebeam_terminator_te1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         return interpolate(freq, self._f, self._s)
 
 
@@ -852,10 +854,10 @@ class ebeam_gc_te1550(siepic_ebeam_pdk_base):
         r"(?:\.txt)"
     )
 
-    def __init__(self, thickness=220e-9, deltaw=0, polarization="TE"):
+    def __init__(self, thickness: float=220e-9, deltaw: int=0, polarization: str="TE") -> None:
         super().__init__(thickness=thickness, deltaw=deltaw, polarization=polarization)
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -892,7 +894,7 @@ class ebeam_gc_te1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         return interpolate(freq, self._f, self._s)
 
 
@@ -953,14 +955,14 @@ class ebeam_wg_integral_1550(siepic_ebeam_pdk_base):
 
     def __init__(
         self,
-        length=0.0,
-        width=500e-9,
-        height=220e-9,
-        polarization="TE",
-        sigma_ne=0.05,
-        sigma_ng=0.05,
-        sigma_nd=0.0001,
-    ):
+        length: float=0.0,
+        width: float=500e-9,
+        height: float=220e-9,
+        polarization: str="TE",
+        sigma_ne: float=0.05,
+        sigma_ng: float=0.05,
+        sigma_nd: float=0.0001,
+    ) -> None:
         if polarization not in ["TE", "TM"]:
             raise ValueError(
                 "Unknown polarization value '{}', must be one of 'TE' or 'TM'".format(
@@ -984,7 +986,7 @@ class ebeam_wg_integral_1550(siepic_ebeam_pdk_base):
 
         self.regenerate_monte_carlo_parameters()
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -1012,7 +1014,7 @@ class ebeam_wg_integral_1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         """Get the s-parameters of a waveguide.
 
         Parameters
@@ -1049,13 +1051,13 @@ class ebeam_wg_integral_1550(siepic_ebeam_pdk_base):
             freq, self.length, self.lam0, self.rand_ne, self.rand_ng, self.rand_nd
         )
 
-    def regenerate_monte_carlo_parameters(self):
+    def regenerate_monte_carlo_parameters(self) -> None:
         self.rand_ne = np.random.normal(self.ne, self.sigma_ne)
         self.rand_ng = np.random.normal(self.ng, self.sigma_ng)
         self.rand_nd = np.random.normal(self.nd, self.sigma_nd)
 
     @staticmethod
-    def cacl_s_params(frequency, length, lam0, ne, ng, nd):
+    def cacl_s_params(frequency: ndarray, length: float, lam0: float, ne: float, ng: float, nd: float) -> ndarray:
         # Initialize array to hold s-params
         s = np.zeros((len(frequency), 2, 2), dtype=complex)
 
@@ -1116,7 +1118,7 @@ class ebeam_y_1550(siepic_ebeam_pdk_base):
         r"(?:\.sparam)"
     )
 
-    def __init__(self, thickness=220e-9, width=500e-9, polarization="TE"):
+    def __init__(self, thickness: float=220e-9, width: float=500e-9, polarization: str="TE") -> None:
         if polarization not in ["TE", "TM"]:
             raise ValueError(
                 "Unknown polarization value '{}', must be one of 'TE' or 'TM'".format(
@@ -1125,7 +1127,7 @@ class ebeam_y_1550(siepic_ebeam_pdk_base):
             )
         super().__init__(thickness=thickness, width=width, polarization=polarization)
 
-    def on_args_changed(self):
+    def on_args_changed(self) -> None:
         self.suspend_autoupdate()
 
         available = self._source_argsets()
@@ -1147,7 +1149,7 @@ class ebeam_y_1550(siepic_ebeam_pdk_base):
 
         self.enable_autoupdate()
 
-    def s_parameters(self, freq):
+    def s_parameters(self, freq: ndarray) -> ndarray:
         """Returns scattering parameters for the y-branch based on its
         parameters.
 
